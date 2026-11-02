@@ -176,6 +176,7 @@ main :: proc() {
 
     window_should_close := false
     color := sdl.Color{30, 30, 30, 255}
+    playing_box: sdl.FRect = {100, 300, 0, 0}
 
     for !window_should_close {
         event: sdl.Event
@@ -194,7 +195,10 @@ main :: proc() {
                 }
                 case .MOUSE_BUTTON_DOWN: {
                     if event.button.button == sdl.BUTTON_LEFT {
-                        // x, y := get_mouse_pos()
+                        x, y := get_mouse_pos()
+                        if (check_mouse_in_region({x, y}, playing_box)) {
+                            toggle_pause(&sdl_state)
+                        }
                     }
                 }
             }
@@ -215,7 +219,7 @@ main :: proc() {
             draw_text(sdl_state, sdl_state.current_track_data.album, &{100, 200, 0, 0})
 
             draw_playback_time(sdl_state)
-            draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &{100, 300, 0, 0})
+            draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
         }
 
         sdl.RenderPresent(sdl_state.renderer)
