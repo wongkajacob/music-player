@@ -29,17 +29,7 @@ TrackData :: struct {
 handle_key :: proc(sdl_state: ^SdlState, key_event: ^sdl.Event) {
     switch key_event.key.key {
     case sdl.K_SPACE: {
-        if sdlMix.TrackPlaying(sdl_state.track) {
-            if !sdlMix.PauseTrack(sdl_state.track) {
-                fmt.eprintln("failed to pause track")
-                return
-            }
-        } else {
-            if !sdlMix.ResumeTrack(sdl_state.track) {
-                fmt.eprintln("failed to continue track")
-                return
-            }
-        }
+        toggle_pause(sdl_state)
     }
     case sdl.K_F: {
         if queue.len(sdl_state.song_list) != 0 {
@@ -156,6 +146,20 @@ draw_playback_time :: proc(sdl_state: SdlState) {
     final_cstr := strings.clone_to_cstring(final_str, context.temp_allocator)
 
     draw_text(sdl_state, final_cstr, &{100, 250, 0, 0})
+}
+
+toggle_pause :: proc(sdl_state: ^SdlState) {
+    if sdlMix.TrackPlaying(sdl_state.track) {
+        if !sdlMix.PauseTrack(sdl_state.track) {
+            fmt.eprintln("failed to pause track")
+            return
+        }
+    } else {
+        if !sdlMix.ResumeTrack(sdl_state.track) {
+            fmt.eprintln("failed to continue track")
+            return
+        }
+    }
 }
 
 main :: proc() {
