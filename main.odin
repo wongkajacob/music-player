@@ -177,10 +177,10 @@ main :: proc() {
     window_should_close := false
     color := sdl.Color{30, 30, 30, 255}
     playing_box: sdl.FRect = {100, 300, 0, 0}
+    next_box: sdl.FRect = {200, 300, 0, 0}
 
     for !window_should_close {
         event: sdl.Event
-
         for sdl.PollEvent(&event) {
             #partial switch event.type {
                 case .QUIT: {
@@ -196,8 +196,11 @@ main :: proc() {
                 case .MOUSE_BUTTON_DOWN: {
                     if event.button.button == sdl.BUTTON_LEFT {
                         x, y := get_mouse_pos()
-                        if (check_mouse_in_region({x, y}, playing_box)) {
+                        if check_mouse_in_region({x, y}, playing_box) {
                             toggle_pause(&sdl_state)
+                        }
+                        if check_mouse_in_region({x, y}, next_box) {
+                            play_next_song(&sdl_state)
                         }
                     }
                 }
@@ -220,6 +223,7 @@ main :: proc() {
 
             draw_playback_time(sdl_state)
             draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
+            draw_text(sdl_state, "Next Song", &next_box)
         }
 
         sdl.RenderPresent(sdl_state.renderer)
