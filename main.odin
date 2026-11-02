@@ -55,16 +55,8 @@ load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
         panic(string(sdl.GetError()))
     }
     if path_info.type == .FILE {
-        sdl_state.current_audio = sdlMix.LoadAudio(sdl_state.mixer, file_path, false)
-        sdl_state.current_track_data = create_audio_properties(sdl_state.current_audio)
-        if !sdlMix.SetTrackAudio(sdl_state.track, sdl_state.current_audio) {
-            fmt.eprintln("failed to set track")
-            return
-        }
-        if !sdlMix.PlayTrack(sdl_state.track, 0) {
-            fmt.eprintln("failed to play track")
-            return
-        }
+        audio := sdlMix.LoadAudio(sdl_state.mixer, file_path, false)
+        queue.push_back(&sdl_state.song_list, audio)
     } else if path_info.type == .DIRECTORY {
         count: i32
         songs := sdl.GlobDirectory(file_path, "*", {}, &count)
@@ -200,7 +192,22 @@ main :: proc() {
             draw_text(sdl_state, sdl_state.current_track_data.title, &{100, 100, 0, 0})
             draw_text(sdl_state, sdl_state.current_track_data.artist, &{100, 150, 0, 0})
             draw_text(sdl_state, sdl_state.current_track_data.album, &{100, 200, 0, 0})
-            draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &{100, 250, 0, 0})
+
+            playback_time := sdlMix.TrackFramesToMS(sdl_state.track, sdlMix.GetTrackPlaybackPosition(sdl_state.track)) / 1000
+            playback_min := (playback_time % 3600) / 60
+            playback_sec := playback_time % 60
+            playback_str := fmt.tprintf("%02d:%02d", playback_min, playback_sec)
+
+            total_time := sdlMix.TrackFramesToMS(sdl_state.track, sdlMix.GetAudioDuration(sdl_state.current_audio)) / 1000
+            total_min := (total_time % 3600) / 60
+            total_sec := total_time % 60
+            time_str := fmt.tprintf("%02d:%02d", total_min, total_sec)
+
+            final_str := fmt.tprint(playback_str, "/", time_str)
+            final_cstr := strings.clone_to_cstring(final_str, context.temp_allocator)
+
+            draw_text(sdl_state, final_cstr, &{100, 250, 0, 0})
+            draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &{100, 300, 0, 0})
         }
 
         sdl.RenderPresent(sdl_state.renderer)
