@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:strings"
 import "core:math"
+import "core:sort"
+import "core:strconv"
 import sdl "vendor:sdl3"
 import "core:container/queue"
 import sdlMix "vendor:sdl3/mixer"
@@ -50,13 +52,21 @@ load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
     } else if path_info.type == .DIRECTORY {
         count: i32
         songs := sdl.GlobDirectory(file_path, "*", {}, &count)
+        song_arr := make([dynamic]^sdlMix.Audio, 0, 0)
+        defer delete(song_arr)
         for song in ([^]cstring)(songs)[:count] {
             path := strings.concatenate({string(file_path), "/", string(song)})
             defer delete(path)
             song_path := strings.clone_to_cstring(path)
             defer delete(song_path)
             audio := sdlMix.LoadAudio(sdl_state.mixer, song_path, false)
-            queue.push_back(&sdl_state.song_list, audio)
+            append(&song_arr, audio)
+        }
+        sort_songs(song_arr)
+        for song in song_arr {
+            properties := sdlMix.GetAudioProperties(song)
+            // fmt.println(sdl.GetStringProperty(properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown number"))
+            queue.push_back(&sdl_state.song_list, song)
         }
     }
 }
@@ -151,15 +161,37 @@ draw_playback_time :: proc(sdl_state: SdlState) {
 toggle_pause :: proc(sdl_state: ^SdlState) {
     if sdlMix.TrackPlaying(sdl_state.track) {
         if !sdlMix.PauseTrack(sdl_state.track) {
-            fmt.eprintln("failed to pause track")
-            return
+            panic(auto_cast sdl.GetError())
         }
     } else {
         if !sdlMix.ResumeTrack(sdl_state.track) {
-            fmt.eprintln("failed to continue track")
-            return
+            panic(auto_cast sdl.GetError())
         }
     }
+}
+
+sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
+    compare_track_number :: proc(song1: ^sdlMix.Audio, song2: ^sdlMix.Audio) -> int {
+        song1_properties := sdlMix.GetAudioProperties(song1)
+        song2_properties := sdlMix.GetAudioProperties(song2)
+        song1_num_cstr := sdl.GetStringProperty(song1_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown track number")
+        song2_num_cstr := sdl.GetStringProperty(song2_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown track number")
+
+        song1_num, success1 := strconv.parse_int(string(song1_num_cstr), 10)
+        song2_num, success2 := strconv.parse_int(string(song2_num_cstr), 10)
+        if !success1 || !success2 {
+            panic("failed to convert track number to integer")
+        }
+        if song1_num < song2_num {
+            return -1
+        } else if song1_num > song2_num {
+            return 1
+        } else {
+            return 0
+        }
+    }
+
+    sort.quick_sort_proc(songs[:], compare_track_number)
 }
 
 main :: proc() {
