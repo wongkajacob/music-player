@@ -52,6 +52,7 @@ load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
     } else if path_info.type == .DIRECTORY {
         count: i32
         songs := sdl.GlobDirectory(file_path, "*", {}, &count)
+        defer sdl.free(songs)
         song_arr := make([dynamic]^sdlMix.Audio, 0, 0)
         defer delete(song_arr)
         for song in ([^]cstring)(songs)[:count] {
@@ -133,6 +134,7 @@ get_mouse_pos :: proc() -> (f32, f32) {
 }
 
 play_next_song :: proc(sdl_state: ^SdlState) {
+    sdlMix.DestroyAudio(sdl_state.current_audio)
     sdl_state.current_audio = queue.pop_front(&sdl_state.song_list)
     sdl_state.current_track_data = create_audio_properties(sdl_state.current_audio)
     if !sdlMix.SetTrackAudio(sdl_state.track, sdl_state.current_audio) {
@@ -265,5 +267,6 @@ main :: proc() {
         }
 
         sdl.RenderPresent(sdl_state.renderer)
+        free_all(context.temp_allocator)
     }
 }
