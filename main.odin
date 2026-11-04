@@ -60,12 +60,14 @@ load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
             song_path := strings.clone_to_cstring(path)
             defer delete(song_path)
             audio := sdlMix.LoadAudio(sdl_state.mixer, song_path, false)
+            if audio == nil {
+                continue
+            }
             append(&song_arr, audio)
         }
         sort_songs(song_arr)
         for song in song_arr {
-            properties := sdlMix.GetAudioProperties(song)
-            // fmt.println(sdl.GetStringProperty(properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown number"))
+            // properties := sdlMix.GetAudioProperties(song)
             queue.push_back(&sdl_state.song_list, song)
         }
     }
