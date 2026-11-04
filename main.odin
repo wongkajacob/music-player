@@ -172,18 +172,20 @@ toggle_pause :: proc(sdl_state: ^SdlState) {
     }
 }
 
+// @todo: next thing to do is to split things up by album and then check from there.
+// the core logic of checking the track is good, but need to make sure the albums are sorted
+// probably will experiment to see what returns when we get the album name string property
+// just kidding the album string is all the same and there are just songs with the same
+// track numbers :skull:
 sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
     compare_track_number :: proc(song1: ^sdlMix.Audio, song2: ^sdlMix.Audio) -> int {
         song1_properties := sdlMix.GetAudioProperties(song1)
         song2_properties := sdlMix.GetAudioProperties(song2)
-        song1_num_cstr := sdl.GetStringProperty(song1_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown track number")
-        song2_num_cstr := sdl.GetStringProperty(song2_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, "unknown track number")
 
-        song1_num, success1 := strconv.parse_int(string(song1_num_cstr), 10)
-        song2_num, success2 := strconv.parse_int(string(song2_num_cstr), 10)
-        if !success1 || !success2 {
-            panic("failed to convert track number to integer")
-        }
+        song1_num := sdl.GetNumberProperty(song1_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, 0)
+        song2_num := sdl.GetNumberProperty(song2_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, 0)
+        fmt.println(song1_num, " ", song2_num)
+
         if song1_num < song2_num {
             return -1
         } else if song1_num > song2_num {
