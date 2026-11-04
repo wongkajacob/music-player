@@ -260,6 +260,8 @@ main :: proc() {
             draw_playback_time(sdl_state)
             draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
             draw_text(sdl_state, "Next Song", &next_box)
+        } else {
+            draw_text(sdl_state, "drop a folder or a music file", &{250, 200, 0, 0})
         }
 
         sdl.RenderPresent(sdl_state.renderer)
