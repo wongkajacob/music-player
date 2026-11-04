@@ -120,7 +120,7 @@ sdl_state_init :: proc(sdl_state: ^SdlState) {
 
 // enter mouse coordinates and check if in region
 check_mouse_in_region :: proc(pos: [2]f32, rect: sdl.FRect) -> bool {
-    return math.abs(pos.x - rect.x) <= rect.w && math.abs(pos.y - rect.y) <= rect.h
+    return (pos.x >= rect.x && pos.x <= rect.x + rect.w) && (pos.y >= rect.y && pos.y <= rect.y + rect.h)
 }
 
 get_mouse_pos :: proc() -> (f32, f32) {
