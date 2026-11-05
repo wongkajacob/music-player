@@ -164,7 +164,23 @@ draw_playback_time :: proc(sdl_state: SdlState) {
     final_str := fmt.tprint(playback_str, "/", time_str)
     final_cstr := strings.clone_to_cstring(final_str, context.temp_allocator)
 
-    draw_text(sdl_state, final_cstr, &{100, 250, 0, 0})
+    draw_text(sdl_state, final_cstr, &{100, 325, 0, 0})
+}
+
+draw_next_song_title :: proc(sdl_state: ^SdlState) {
+    title: cstring
+    if queue.len(sdl_state.song_list) > 1 {
+        next_song := queue.get(&sdl_state.song_list, 0)
+        properties := sdlMix.GetAudioProperties(next_song)
+        title = sdl.GetStringProperty(properties, sdlMix.PROP_METADATA_TITLE_STRING, "Unknown Title")
+    } else {
+        title = ""
+    }
+    final_string := strings.concatenate({"Next: ", strings.clone_from_cstring(title)})
+    defer delete(final_string)
+    final_cstr := strings.clone_to_cstring(final_string)
+    defer delete(final_cstr)
+    draw_text(sdl_state^, final_cstr, &{100, 475, 0, 0})
 }
 
 toggle_pause :: proc(sdl_state: ^SdlState) {
@@ -267,6 +283,7 @@ main :: proc() {
             draw_playback_time(sdl_state)
             draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
             draw_text(sdl_state, "Next Song", &next_box)
+            draw_next_song_title(&sdl_state)
         } else {
             draw_text(sdl_state, "drop a folder or a music file", &{250, 200, 0, 0})
         }
