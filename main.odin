@@ -209,7 +209,6 @@ sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
 
         song1_num := sdl.GetNumberProperty(song1_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, 0)
         song2_num := sdl.GetNumberProperty(song2_properties, sdlMix.PROP_METADATA_TRACK_NUMBER, 0)
-        fmt.println(song1_num, " ", song2_num)
 
         if song1_num < song2_num {
             return -1
