@@ -117,12 +117,12 @@ draw_text :: proc(sdl_state: SdlState, text: cstring, rect: ^sdl.FRect) {
 }
 
 sdl_state_init :: proc(sdl_state: ^SdlState) {
-    sdl_state.window = sdl.CreateWindow("audio player", 800, 600, {})
+    sdl_state.window = sdl.CreateWindow("audio player", 800, 600, {.HIGH_PIXEL_DENSITY})
     sdl_state.renderer = sdl.CreateRenderer(sdl_state.window, nil)
     sdl_state.mixer = sdlMix.CreateMixerDevice(sdl.AUDIO_DEVICE_DEFAULT_PLAYBACK, nil)
     sdl_state.track = sdlMix.CreateTrack(sdl_state.mixer)
     sdl_state.ttf_engine = sdlTtf.CreateRendererTextEngine(sdl_state.renderer)
-    sdl_state.font = sdlTtf.OpenFont(cstring("/Users/jacobwong/Library/Fonts/PersonalIosevka-Regular.ttf"), 16)
+    sdl_state.font = sdlTtf.OpenFont(cstring("/Users/jacobwong/Library/Fonts/PersonalIosevka-Regular.ttf"), 40)
     queue.init(&sdl_state.song_list)
 }
 
@@ -219,8 +219,8 @@ main :: proc() {
 
     window_should_close := false
     color := sdl.Color{30, 30, 30, 255}
-    playing_box: sdl.FRect = {100, 300, 0, 0}
-    next_box: sdl.FRect = {200, 300, 0, 0}
+    playing_box: sdl.FRect = {100, 400, 0, 0}
+    next_box: sdl.FRect = {400, 400, 0, 0}
 
     for !window_should_close {
         event: sdl.Event
@@ -261,8 +261,8 @@ main :: proc() {
 
         if sdl_state.current_track_data != {} {
             draw_text(sdl_state, sdl_state.current_track_data.title, &{100, 100, 0, 0})
-            draw_text(sdl_state, sdl_state.current_track_data.artist, &{100, 150, 0, 0})
-            draw_text(sdl_state, sdl_state.current_track_data.album, &{100, 200, 0, 0})
+            draw_text(sdl_state, sdl_state.current_track_data.artist, &{100, 175, 0, 0})
+            draw_text(sdl_state, sdl_state.current_track_data.album, &{100, 250, 0, 0})
 
             draw_playback_time(sdl_state)
             draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
