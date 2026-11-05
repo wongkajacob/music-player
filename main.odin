@@ -36,6 +36,11 @@ handle_key :: proc(sdl_state: ^SdlState, key_event: ^sdl.Event) {
     case sdl.K_F: {
         if queue.len(sdl_state.song_list) != 0 {
             play_next_song(sdl_state)
+        } else {
+            sdl_state.current_track_data = {}
+            if !sdlMix.StopTrack(sdl_state.track, 0) {
+                panic(auto_cast sdl.GetError())
+            }
         }
     }
     }
