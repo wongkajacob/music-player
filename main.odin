@@ -200,6 +200,8 @@ toggle_pause :: proc(sdl_state: ^SdlState) {
 // probably will experiment to see what returns when we get the album name string property
 // just kidding the album string is all the same and there are just songs with the same
 // track numbers :skull:
+// probably will need to look for a way to get the disc number, be it through extenral source
+// or some other way
 sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
     compare_track_number :: proc(song1: ^sdlMix.Audio, song2: ^sdlMix.Audio) -> int {
         song1_properties := sdlMix.GetAudioProperties(song1)
