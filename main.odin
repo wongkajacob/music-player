@@ -248,7 +248,7 @@ main :: proc() {
     sdl_state_init(&sdl_state)
 
     window_should_close := false
-    color := sdl.Color{30, 30, 30, 255}
+    BACKGROUND_COLOR :: sdl.Color{30, 30, 30, 255}
     playing_box: sdl.FRect = {100, 400, 0, 0}
     next_box: sdl.FRect = {400, 400, 0, 0}
     shuffle_box: sdl.FRect = {100, 550, 0, 0}
@@ -284,7 +284,7 @@ main :: proc() {
             }
         }
 
-        sdl.SetRenderDrawColor(sdl_state.renderer, color.r, color.g, color.b, color.a)
+        sdl.SetRenderDrawColor(sdl_state.renderer, BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b, BACKGROUND_COLOR.a)
         sdl.RenderClear(sdl_state.renderer)
 
         if (queue.len(sdl_state.song_list) != 0) {
