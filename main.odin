@@ -6,6 +6,7 @@ import "core:math"
 import "core:sort"
 import "core:strconv"
 import "core:strings"
+import "core:math/rand"
 import sdl "vendor:sdl3"
 import sdlMix "vendor:sdl3/mixer"
 import sdlTtf "vendor:sdl3/ttf"
@@ -222,6 +223,18 @@ sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
     sort.quick_sort_proc(songs[:], compare_track_number)
 }
 
+shuffle_songs :: proc(songs: ^queue.Queue(^sdlMix.Audio)) {
+    temp_arr := make([dynamic]^sdlMix.Audio)
+    defer delete(temp_arr)
+    for (queue.len(songs^) != 0) {
+        append(&temp_arr, queue.pop_front(songs))
+    }
+    rand.shuffle(temp_arr[:])
+    for song in temp_arr {
+        queue.push_front(songs, song)
+    }
+}
+
 main :: proc() {
     init_functions()
     defer {
@@ -238,6 +251,7 @@ main :: proc() {
     color := sdl.Color{30, 30, 30, 255}
     playing_box: sdl.FRect = {100, 400, 0, 0}
     next_box: sdl.FRect = {400, 400, 0, 0}
+    shuffle_box: sdl.FRect = {100, 550, 0, 0}
 
     for !window_should_close {
         event: sdl.Event
@@ -262,6 +276,9 @@ main :: proc() {
                         if check_mouse_in_region({x, y}, next_box) {
                             play_next_song(&sdl_state)
                         }
+                        if check_mouse_in_region({x, y}, shuffle_box) {
+                            shuffle_songs(&sdl_state.song_list)
+                        }
                     }
                 }
             }
@@ -285,6 +302,7 @@ main :: proc() {
             draw_text(sdl_state, sdlMix.TrackPlaying(sdl_state.track) ? "playing" : "paused", &playing_box)
             draw_text(sdl_state, "Next Song", &next_box)
             draw_next_song_title(&sdl_state)
+            draw_text(sdl_state, "Shuffle Songs", &shuffle_box)
         } else {
             draw_text(sdl_state, "drop a folder or a music file", &{250, 200, 0, 0})
         }
