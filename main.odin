@@ -269,7 +269,10 @@ main :: proc() {
                 }
                 case .MOUSE_BUTTON_DOWN: {
                     if event.button.button == sdl.BUTTON_LEFT {
+                        sdl.ConvertEventToRenderCoordinates(sdl_state.renderer, &event)
                         x, y := get_mouse_pos()
+                        x *= sdl.GetWindowPixelDensity(sdl_state.window)
+                        y *= sdl.GetWindowPixelDensity(sdl_state.window)
                         if check_mouse_in_region({x, y}, playing_box) {
                             toggle_pause(&sdl_state)
                         }
