@@ -232,6 +232,13 @@ seek_audio :: proc(sdl_state: ^SdlState, pos: [2]f32, progress_bar: sdl.FRect) {
     }
 }
 
+seek_volume :: proc(sdl_state: ^SdlState, pos: [2]f32, volume_bar: sdl.FRect) {
+    percentage := (volume_bar.y + volume_bar.h - pos.y) / volume_bar.h
+    if !sdlMix.SetTrackGain(sdl_state.track, percentage * 5.) {
+        panic(auto_cast sdl.GetError())
+    }
+}
+
 shuffle_songs :: proc(songs: ^queue.Queue(^sdlMix.Audio)) {
     temp_arr := make([dynamic]^sdlMix.Audio)
     defer delete(temp_arr)
@@ -246,6 +253,10 @@ shuffle_songs :: proc(songs: ^queue.Queue(^sdlMix.Audio)) {
 
 main :: proc() {
     PROGRESS_BAR_WIDTH :: 300 * 4
+    VOLUME_BAR_HEIGHT :: 300
+    BACKGROUND_COLOR :: sdl.Color{30, 30, 30, 255}
+    window_should_close := false
+
     init_functions()
     defer {
         sdlMix.Quit()
@@ -254,11 +265,7 @@ main :: proc() {
     }
 
     sdl_state: SdlState
-
     sdl_state_init(&sdl_state)
-
-    window_should_close := false
-    BACKGROUND_COLOR :: sdl.Color{30, 30, 30, 255}
 
     // @todo: should maybe find a way to automate this
     playing_box: sdl.FRect = {100, 400, 0, 0}
@@ -266,6 +273,10 @@ main :: proc() {
     shuffle_box: sdl.FRect = {100, 550, 0, 0}
     total_progress_bar: sdl.FRect = {100, 625, PROGRESS_BAR_WIDTH, 50}
     heard_progress_bar: sdl.FRect = {100, 625, 0, 50}
+    total_volume_bar: sdl.FRect = {100, 700, 25, VOLUME_BAR_HEIGHT}
+    // @note: when handling this rectangle the height should be negative to show
+    //        a rising bar
+    used_volume_bar: sdl.FRect = {100, 700 + VOLUME_BAR_HEIGHT, 25, 0}
 
     for !window_should_close {
         x, y, flags := get_mouse_pos()
@@ -300,11 +311,17 @@ main :: proc() {
                         if check_mouse_in_region({x, y}, total_progress_bar) {
                             seek_audio(&sdl_state, {x, y}, total_progress_bar)
                         }
+                        if check_mouse_in_region({x, y}, total_volume_bar) {
+                            seek_volume(&sdl_state, {x, y}, total_volume_bar)
                         }
                     }
+                }
                 case .MOUSE_MOTION: {
                     if .LEFT in event.motion.state && check_mouse_in_region({x, y}, total_progress_bar) {
                         seek_audio(&sdl_state, {x, y}, total_progress_bar)
+                    }
+                    if .LEFT in event.motion.state && check_mouse_in_region({x, y}, total_volume_bar) {
+                        seek_volume(&sdl_state, {x, y}, total_volume_bar)
                     }
                 }
             }
@@ -323,6 +340,7 @@ main :: proc() {
 
         if sdl_state.current_track_data != {} {
             heard_progress_bar.w = auto_cast sdlMix.GetTrackPlaybackPosition(sdl_state.track) / auto_cast sdlMix.GetAudioDuration(sdl_state.current_audio) * PROGRESS_BAR_WIDTH
+            used_volume_bar.h = -(sdlMix.GetTrackGain(sdl_state.track) / 5 * VOLUME_BAR_HEIGHT)
 
             draw_text(sdl_state, sdl_state.current_track_data.title, &{100, 100, 0, 0})
             draw_text(sdl_state, sdl_state.current_track_data.artist, &{100, 175, 0, 0})
@@ -336,6 +354,8 @@ main :: proc() {
             sdl.SetRenderDrawColor(sdl_state.renderer, 255, 255, 255, 255)
             sdl.RenderRect(sdl_state.renderer, &total_progress_bar)
             sdl.RenderFillRect(sdl_state.renderer, &heard_progress_bar)
+            sdl.RenderRect(sdl_state.renderer, &total_volume_bar)
+            sdl.RenderFillRect(sdl_state.renderer, &used_volume_bar)
 
             // @todo: make nicer looking button decorations
             sdl.RenderRect(sdl_state.renderer, &next_box)
