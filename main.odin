@@ -292,35 +292,24 @@ main :: proc() {
                             toggle_pause(&sdl_state)
                         }
                         if check_mouse_in_region({x, y}, next_box) {
-                            play_next_song(&sdl_state)
+                            if queue.len(sdl_state.song_list) > 0 {
+                                play_next_song(&sdl_state)
+                            }
                         }
                         if check_mouse_in_region({x, y}, shuffle_box) {
                             shuffle_songs(&sdl_state.song_list)
                         }
-                        if check_mouse_in_region({x, y}, total_progress_bar) {
-                            seek_audio(&sdl_state, {x, y}, total_progress_bar)
-
-                        }
+                        // if check_mouse_in_region({x, y}, total_progress_bar) {
+                        //     seek_audio(&sdl_state, {x, y}, total_progress_bar)
+                        //
+                        // }
                     }
 
                 }
             }
         }
 
-        if check_mouse_in_region({x, y}, total_progress_bar) && .LEFT in flags {
-            // @note: this is to attempt to prevent noises when moving the bar around, but
-            // its kinda funky so maybe check later
-            // if sdlMix.TrackPlaying(sdl_state.track) {
-            //     if !sdlMix.PauseTrack(sdl_state.track) {
-            //         panic(auto_cast sdl.GetError())
-            //     }
-            // } else {
-            //     if !sdlMix.ResumeTrack(sdl_state.track) {
-            //         panic(auto_cast sdl.GetError())
-            //     }
-            // }
-            seek_audio(&sdl_state, {x, y}, total_progress_bar)
-        }
+
 
         sdl.SetRenderDrawColor(sdl_state.renderer, BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b, BACKGROUND_COLOR.a)
         sdl.RenderClear(sdl_state.renderer)
