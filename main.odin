@@ -336,6 +336,8 @@ main :: proc() {
             sdl.SetRenderDrawColor(sdl_state.renderer, 255, 255, 255, 255)
             sdl.RenderRect(sdl_state.renderer, &total_progress_bar)
             sdl.RenderFillRect(sdl_state.renderer, &heard_progress_bar)
+
+            // @todo: make nicer looking button decorations
             sdl.RenderRect(sdl_state.renderer, &next_box)
             sdl.RenderRect(sdl_state.renderer, &shuffle_box)
             sdl.RenderRect(sdl_state.renderer, &playing_box)
