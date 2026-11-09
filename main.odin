@@ -125,6 +125,7 @@ sdl_state_init :: proc(sdl_state: ^SdlState) {
     sdl_state.ttf_engine = sdlTtf.CreateRendererTextEngine(sdl_state.renderer)
     sdl_state.font = sdlTtf.OpenFont(cstring("/Users/jacobwong/Library/Fonts/PersonalIosevka-Regular.ttf"), 40)
     queue.init(&sdl_state.song_list)
+    sdl.SetRenderVSync(sdl_state.renderer, 1)
 }
 
 // enter mouse coordinates and check if in region
