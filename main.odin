@@ -297,12 +297,15 @@ main :: proc() {
                         if check_mouse_in_region({x, y}, shuffle_box) {
                             shuffle_songs(&sdl_state.song_list)
                         }
-                        // if check_mouse_in_region({x, y}, total_progress_bar) {
-                        //     seek_audio(&sdl_state, {x, y}, total_progress_bar)
-                        //
-                        // }
+                        if check_mouse_in_region({x, y}, total_progress_bar) {
+                            seek_audio(&sdl_state, {x, y}, total_progress_bar)
+                        }
+                        }
                     }
-
+                case .MOUSE_MOTION: {
+                    if .LEFT in event.motion.state && check_mouse_in_region({x, y}, total_progress_bar) {
+                        seek_audio(&sdl_state, {x, y}, total_progress_bar)
+                    }
                 }
             }
         }
@@ -319,20 +322,6 @@ main :: proc() {
         }
 
         if sdl_state.current_track_data != {} {
-            if check_mouse_in_region({x, y}, total_progress_bar) && .LEFT in flags {
-                // @note: this is to attempt to prevent noises when moving the bar around, but
-                // its kinda funky so maybe check later
-                // if sdlMix.TrackPlaying(sdl_state.track) {
-                //     if !sdlMix.PauseTrack(sdl_state.track) {
-                //         panic(auto_cast sdl.GetError())
-                //     }
-                // } else {
-                //     if !sdlMix.ResumeTrack(sdl_state.track) {
-                //         panic(auto_cast sdl.GetError())
-                //     }
-                // }
-                seek_audio(&sdl_state, {x, y}, total_progress_bar)
-            }
             heard_progress_bar.w = auto_cast sdlMix.GetTrackPlaybackPosition(sdl_state.track) / auto_cast sdlMix.GetAudioDuration(sdl_state.current_audio) * PROGRESS_BAR_WIDTH
 
             draw_text(sdl_state, sdl_state.current_track_data.title, &{100, 100, 0, 0})
