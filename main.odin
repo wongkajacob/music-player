@@ -336,6 +336,9 @@ main :: proc() {
             sdl.SetRenderDrawColor(sdl_state.renderer, 255, 255, 255, 255)
             sdl.RenderRect(sdl_state.renderer, &total_progress_bar)
             sdl.RenderFillRect(sdl_state.renderer, &heard_progress_bar)
+            sdl.RenderRect(sdl_state.renderer, &next_box)
+            sdl.RenderRect(sdl_state.renderer, &shuffle_box)
+            sdl.RenderRect(sdl_state.renderer, &playing_box)
         } else {
             draw_text(sdl_state, "drop a folder or a music file", &{250, 200, 0, 0})
         }
