@@ -133,11 +133,11 @@ check_mouse_in_region :: proc(pos: [2]f32, rect: sdl.FRect) -> bool {
     return (pos.x >= rect.x && pos.x <= rect.x + rect.w) && (pos.y >= rect.y && pos.y <= rect.y + rect.h)
 }
 
-get_mouse_pos :: proc() -> (f32, f32) {
+get_mouse_pos :: proc() -> (f32, f32, sdl.MouseButtonFlags) {
     x: f32 = 0
     y: f32 = 0
     mouse_flags :=  sdl.GetMouseState(&x, &y)
-    return x, y
+    return x, y, mouse_flags
 }
 
 play_next_song :: proc(sdl_state: ^SdlState) {
@@ -224,6 +224,14 @@ sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
     sort.quick_sort_proc(songs[:], compare_track_number)
 }
 
+seek_audio :: proc(sdl_state: ^SdlState, pos: [2]f32, progress_bar: sdl.FRect) {
+    // checking for mouse button in region is done in the outer loop
+    percentage := (pos.x - progress_bar.x) / progress_bar.w
+    if !sdlMix.SetTrackPlaybackPosition(sdl_state.track, auto_cast (f32(sdlMix.GetAudioDuration(sdl_state.current_audio)) * percentage)) {
+        panic(auto_cast sdl.GetError())
+    }
+}
+
 shuffle_songs :: proc(songs: ^queue.Queue(^sdlMix.Audio)) {
     temp_arr := make([dynamic]^sdlMix.Audio)
     defer delete(temp_arr)
@@ -237,6 +245,7 @@ shuffle_songs :: proc(songs: ^queue.Queue(^sdlMix.Audio)) {
 }
 
 main :: proc() {
+    PROGRESS_BAR_WIDTH :: 300 * 4
     init_functions()
     defer {
         sdlMix.Quit()
@@ -250,11 +259,20 @@ main :: proc() {
 
     window_should_close := false
     BACKGROUND_COLOR :: sdl.Color{30, 30, 30, 255}
+
+    // @todo: should maybe find a way to automate this
     playing_box: sdl.FRect = {100, 400, 0, 0}
     next_box: sdl.FRect = {400, 400, 0, 0}
     shuffle_box: sdl.FRect = {100, 550, 0, 0}
+    total_progress_bar: sdl.FRect = {100, 625, PROGRESS_BAR_WIDTH, 50}
+    heard_progress_bar: sdl.FRect = {100, 625, 0, 50}
+
+
 
     for !window_should_close {
+        x, y, flags := get_mouse_pos()
+        x *= sdl.GetWindowPixelDensity(sdl_state.window)
+        y *= sdl.GetWindowPixelDensity(sdl_state.window)
         event: sdl.Event
         for sdl.PollEvent(&event) {
             #partial switch event.type {
@@ -270,10 +288,6 @@ main :: proc() {
                 }
                 case .MOUSE_BUTTON_DOWN: {
                     if event.button.button == sdl.BUTTON_LEFT {
-                        sdl.ConvertEventToRenderCoordinates(sdl_state.renderer, &event)
-                        x, y := get_mouse_pos()
-                        x *= sdl.GetWindowPixelDensity(sdl_state.window)
-                        y *= sdl.GetWindowPixelDensity(sdl_state.window)
                         if check_mouse_in_region({x, y}, playing_box) {
                             toggle_pause(&sdl_state)
                         }
@@ -283,9 +297,29 @@ main :: proc() {
                         if check_mouse_in_region({x, y}, shuffle_box) {
                             shuffle_songs(&sdl_state.song_list)
                         }
+                        if check_mouse_in_region({x, y}, total_progress_bar) {
+                            seek_audio(&sdl_state, {x, y}, total_progress_bar)
+
+                        }
                     }
+
                 }
             }
+        }
+
+        if check_mouse_in_region({x, y}, total_progress_bar) && .LEFT in flags {
+            // @note: this is to attempt to prevent noises when moving the bar around, but
+            // its kinda funky so maybe check later
+            // if sdlMix.TrackPlaying(sdl_state.track) {
+            //     if !sdlMix.PauseTrack(sdl_state.track) {
+            //         panic(auto_cast sdl.GetError())
+            //     }
+            // } else {
+            //     if !sdlMix.ResumeTrack(sdl_state.track) {
+            //         panic(auto_cast sdl.GetError())
+            //     }
+            // }
+            seek_audio(&sdl_state, {x, y}, total_progress_bar)
         }
 
         sdl.SetRenderDrawColor(sdl_state.renderer, BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b, BACKGROUND_COLOR.a)
@@ -298,6 +332,8 @@ main :: proc() {
         }
 
         if sdl_state.current_track_data != {} {
+            heard_progress_bar.w = auto_cast sdlMix.GetTrackPlaybackPosition(sdl_state.track) / auto_cast sdlMix.GetAudioDuration(sdl_state.current_audio) * PROGRESS_BAR_WIDTH
+
             draw_text(sdl_state, sdl_state.current_track_data.title, &{100, 100, 0, 0})
             draw_text(sdl_state, sdl_state.current_track_data.artist, &{100, 175, 0, 0})
             draw_text(sdl_state, sdl_state.current_track_data.album, &{100, 250, 0, 0})
@@ -307,6 +343,9 @@ main :: proc() {
             draw_text(sdl_state, "Next Song", &next_box)
             draw_next_song_title(&sdl_state)
             draw_text(sdl_state, "Shuffle Songs", &shuffle_box)
+            sdl.SetRenderDrawColor(sdl_state.renderer, 255, 255, 255, 255)
+            sdl.RenderRect(sdl_state.renderer, &total_progress_bar)
+            sdl.RenderFillRect(sdl_state.renderer, &heard_progress_bar)
         } else {
             draw_text(sdl_state, "drop a folder or a music file", &{250, 200, 0, 0})
         }
