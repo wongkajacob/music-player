@@ -11,6 +11,7 @@ import sdl "vendor:sdl3"
 import sdlMix "vendor:sdl3/mixer"
 import sdlTtf "vendor:sdl3/ttf"
 
+// holds the state of the program
 SdlState :: struct {
     window: ^sdl.Window,
     renderer: ^sdl.Renderer,
@@ -23,12 +24,14 @@ SdlState :: struct {
     current_track_data: TrackData,
 }
 
+// contains track metadata that will be useful for information
 TrackData :: struct {
     title: cstring,
     artist: cstring,
     album: cstring,
 }
 
+// checks the keypress event and then handles it
 handle_key :: proc(sdl_state: ^SdlState, key_event: ^sdl.Event) {
     switch key_event.key.key {
     case sdl.K_SPACE: {
@@ -47,6 +50,7 @@ handle_key :: proc(sdl_state: ^SdlState, key_event: ^sdl.Event) {
     }
 }
 
+// loads the dropped folder and files into memory and song list
 load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
     path_info: sdl.PathInfo
     if !sdl.GetPathInfo(file_path, &path_info) {
@@ -80,6 +84,7 @@ load_dropped_audio_file :: proc(sdl_state: ^SdlState, file_path: cstring) {
     }
 }
 
+// gets the metadata from the file and stores it
 create_audio_properties :: proc(audio: ^sdlMix.Audio) -> TrackData {
     data: TrackData
     properties := sdlMix.GetAudioProperties(audio)
@@ -89,6 +94,7 @@ create_audio_properties :: proc(audio: ^sdlMix.Audio) -> TrackData {
     return data
 }
 
+// sdl init functions
 init_functions :: proc() {
     if !sdl.Init({.EVENTS, .VIDEO, .AUDIO}) {
         panic(string(sdl.GetError()))
@@ -102,7 +108,7 @@ init_functions :: proc() {
     }
 }
 
-// function draws text and returns the rectangle that contains the text for further manipulations
+// function draws text and edits the rectangle that contains the text for further manipulations
 draw_text :: proc(sdl_state: SdlState, text: cstring, rect: ^sdl.FRect) {
     drawing_text := sdlTtf.CreateText(sdl_state.ttf_engine,
                                       sdl_state.font,
@@ -117,6 +123,7 @@ draw_text :: proc(sdl_state: SdlState, text: cstring, rect: ^sdl.FRect) {
     sdlTtf.DestroyText(drawing_text)
 }
 
+// does all the sdl window, renderer, mixer, etc. setup
 sdl_state_init :: proc(sdl_state: ^SdlState) {
     sdl_state.window = sdl.CreateWindow("audio player", 800, 600, {.HIGH_PIXEL_DENSITY})
     sdl_state.renderer = sdl.CreateRenderer(sdl_state.window, nil)
@@ -133,6 +140,7 @@ check_mouse_in_region :: proc(pos: [2]f32, rect: sdl.FRect) -> bool {
     return (pos.x >= rect.x && pos.x <= rect.x + rect.w) && (pos.y >= rect.y && pos.y <= rect.y + rect.h)
 }
 
+// gets all the mouse information
 get_mouse_pos :: proc() -> (f32, f32, sdl.MouseButtonFlags) {
     x: f32 = 0
     y: f32 = 0
@@ -220,7 +228,6 @@ sort_songs :: proc(songs: [dynamic]^sdlMix.Audio) {
             return 0
         }
     }
-
     sort.quick_sort_proc(songs[:], compare_track_number)
 }
 
